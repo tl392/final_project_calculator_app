@@ -1,0 +1,174 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid gap-6">
+  <section class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold">New Calculation</h1>
+      <a href="/reports" class="text-blue-700 font-medium hover:underline">View Reports</a>
+    </div>
+    <div id="messageBox" class="hidden mb-4 p-3 rounded"></div>
+    <form id="calculationForm" class="grid md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Operation</label>
+        <select id="calcType" class="w-full border rounded px-3 py-2">
+          <option value="addition">Addition</option>
+          <option value="subtraction">Subtraction</option>
+          <option value="multiplication">Multiplication</option>
+          <option value="division">Division</option>
+          <option value="exponentiation">Exponentiation</option>
+          <option value="modulus">Modulus</option>
+          <option value="sqrt">Square Root</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium mb-1">Inputs</label>
+        <input id="calcInputs" class="w-full border rounded px-3 py-2" placeholder="Examples: 5,10  |  2,3  |  81">
+        <p id="inputHint" class="text-xs text-gray-500 mt-1">Enter at least two comma-separated numbers.</p>
+      </div>
+      <div class="md:col-span-3 bg-gray-50 rounded p-4 border">
+        <div class="text-sm text-gray-500 mb-1">Preview</div>
+        <div id="previewBox" class="text-lg font-semibold">Enter values to preview the result.</div>
+      </div>
+      <div class="md:col-span-3">
+        <button class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded">Save Calculation</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-bold mb-4">Calculation History</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b text-left">
+            <th class="py-2">Type</th>
+            <th class="py-2">Expression</th>
+            <th class="py-2">Result</th>
+            <th class="py-2">Created</th>
+            <th class="py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="calculationsTable">
+          <tr><td colspan="5" class="py-4 text-gray-500">Loading calculations...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    window.location.href = '/login';
+    return;
+  }
+
+  const form = document.getElementById('calculationForm');
+  const calcType = document.getElementById('calcType');
+  const calcInputs = document.getElementById('calcInputs');
+  const previewBox = document.getElementById('previewBox');
+  const inputHint = document.getElementById('inputHint');
+  const messageBox = document.getElementById('messageBox');
+
+  function showMessage(text, type='success') {
+    messageBox.className = `mb-4 p-3 rounded ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+    messageBox.textContent = text;
+    messageBox.classList.remove('hidden');
+  }
+
+  function updateHint() {
+    const hints = {
+      addition: 'Enter at least two numbers. Example: 5, 10, 15',
+      subtraction: 'Enter at least two numbers. Example: 20, 3, 2',
+      multiplication: 'Enter at least two numbers. Example: 2, 3, 4',
+      division: 'Enter at least two numbers. Example: 100, 2, 5',
+      exponentiation: 'Enter exactly two numbers: base, exponent. Example: 2, 3',
+      modulus: 'Enter exactly two numbers: dividend, divisor. Example: 10, 3',
+      sqrt: 'Enter exactly one number. Example: 81',
+    };
+    inputHint.textContent = hints[calcType.value];
+  }
+
+  function updatePreview() {
+    const inputs = parseInputs(calcInputs.value);
+    const result = calculatePreview(calcType.value, inputs);
+    if (result === null) {
+      previewBox.textContent = 'Enter valid values to preview the result.';
+      return;
+    }
+    previewBox.textContent = `${formatOperation(calcType.value, inputs)} = ${result}`;
+  }
+
+  calcType.addEventListener('change', () => { updateHint(); updatePreview(); });
+  calcInputs.addEventListener('input', updatePreview);
+  updateHint();
+
+  async function loadCalculations() {
+    const body = document.getElementById('calculationsTable');
+    const response = await fetch('/calculations', { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) {
+      body.innerHTML = '<tr><td colspan="5" class="py-4 text-red-600">Failed to load calculations.</td></tr>';
+      return;
+    }
+    const calculations = await response.json();
+    if (!calculations.length) {
+      body.innerHTML = '<tr><td colspan="5" class="py-4 text-gray-500">No calculations yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = calculations.map(calc => `
+      <tr class="border-b">
+        <td class="py-3 capitalize">${calc.type}</td>
+        <td class="py-3">${formatOperation(calc.type, calc.inputs)}</td>
+        <td class="py-3 font-semibold">${calc.result}</td>
+        <td class="py-3">${new Date(calc.created_at).toLocaleString()}</td>
+        <td class="py-3 space-x-3">
+          <a class="text-blue-700 hover:underline" href="/dashboard/view/${calc.id}">View</a>
+          <a class="text-gray-700 hover:underline" href="/dashboard/edit/${calc.id}">Edit</a>
+          <button class="text-red-600 hover:underline" data-delete-id="${calc.id}">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+
+    document.querySelectorAll('[data-delete-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const calcId = btn.dataset.deleteId;
+        const response = await fetch(`/calculations/${calcId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        if (response.ok) {
+          showMessage('Calculation deleted successfully.');
+          loadCalculations();
+        } else {
+          showMessage('Failed to delete calculation.', 'error');
+        }
+      });
+    });
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    messageBox.classList.add('hidden');
+    const inputs = parseInputs(calcInputs.value);
+    const response = await fetch('/calculations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ type: calcType.value, inputs })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      showMessage(data.detail || 'Failed to save calculation.', 'error');
+      return;
+    }
+    calcInputs.value = '';
+    updatePreview();
+    showMessage('Calculation saved successfully.');
+    loadCalculations();
+  });
+
+  loadCalculations();
+});
+</script>
+{% endblock %}

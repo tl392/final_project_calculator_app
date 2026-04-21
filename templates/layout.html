@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Calculations App{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="{{ url_for('static', path='img/favicon.ico') }}" type="image/x-icon">
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+  <header class="bg-blue-700 shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <a id="brandLink" href="{{ url_for('read_index') }}" class="text-white font-bold text-xl">Calculations App</a>
+      <nav id="authNav" class="hidden flex items-center gap-4 text-sm text-white">
+        <a href="/dashboard" class="hover:underline">Dashboard</a>
+        <a href="/reports" class="hover:underline">Reports</a>
+        <span id="layoutUserWelcome" class="hidden md:inline"></span>
+        <button id="layoutLogoutBtn" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('access_token');
+      const brandLink = document.getElementById('brandLink');
+      const authNav = document.getElementById('authNav');
+      const welcome = document.getElementById('layoutUserWelcome');
+      const logoutBtn = document.getElementById('layoutLogoutBtn');
+
+      if (token) {
+        authNav.classList.remove('hidden');
+        brandLink.href = '/dashboard';
+        const username = localStorage.getItem('username');
+        if (username) {
+          welcome.textContent = `Welcome, ${username}!`;
+          welcome.classList.remove('hidden');
+        }
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          localStorage.clear();
+          window.location.href = '/login';
+        });
+      }
+    });
+
+    function formatOperation(type, inputs) {
+      const list = inputs || [];
+      switch (type) {
+        case 'addition': return list.join(' + ');
+        case 'subtraction': return list.join(' - ');
+        case 'multiplication': return list.join(' × ');
+        case 'division': return list.join(' ÷ ');
+        case 'exponentiation': return `${list[0]} ^ ${list[1]}`;
+        case 'modulus': return `${list[0]} % ${list[1]}`;
+        case 'sqrt': return `√(${list[0]})`;
+        default: return list.join(', ');
+      }
+    }
+
+    function calculatePreview(type, inputs) {
+      if (!Array.isArray(inputs) || inputs.length === 0) return null;
+      if (['addition', 'subtraction', 'multiplication', 'division'].includes(type) && inputs.length < 2) return null;
+      if (['exponentiation', 'modulus'].includes(type) && inputs.length !== 2) return null;
+      if (type === 'sqrt' && inputs.length !== 1) return null;
+
+      try {
+        switch (type) {
+          case 'addition': return inputs.reduce((a, b) => a + b, 0);
+          case 'subtraction': return inputs.slice(1).reduce((a, b) => a - b, inputs[0]);
+          case 'multiplication': return inputs.reduce((a, b) => a * b, 1);
+          case 'division':
+            if (inputs.slice(1).some(v => v === 0)) return 'Cannot divide by zero';
+            return inputs.slice(1).reduce((a, b) => a / b, inputs[0]);
+          case 'exponentiation': return inputs[0] ** inputs[1];
+          case 'modulus':
+            if (inputs[1] === 0) return 'Cannot perform modulus by zero';
+            return inputs[0] % inputs[1];
+          case 'sqrt':
+            if (inputs[0] < 0) return 'Cannot take square root of a negative number';
+            return Math.sqrt(inputs[0]);
+          default: return null;
+        }
+      } catch (e) {
+        return 'Invalid calculation';
+      }
+    }
+
+    function parseInputs(value) {
+      return value.split(',').map(v => parseFloat(v.trim())).filter(v => !Number.isNaN(v));
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

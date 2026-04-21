@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+{% block title %}Edit Calculation{% endblock %}
+
+{% block content %}
+<section class="bg-white rounded-lg shadow p-6 max-w-3xl mx-auto">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold">Edit Calculation</h1>
+    <a href="/dashboard" class="text-blue-700 hover:underline">Back to Dashboard</a>
+  </div>
+  <div id="messageBox" class="hidden mb-4 p-3 rounded"></div>
+  <form id="editCalculationForm" class="grid gap-4">
+    <div>
+      <label class="block text-sm font-medium mb-1">Operation</label>
+      <input id="calcType" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Inputs</label>
+      <input id="calcInputs" class="w-full border rounded px-3 py-2">
+      <p id="inputHint" class="text-xs text-gray-500 mt-1"></p>
+    </div>
+    <div class="bg-gray-50 rounded p-4 border">
+      <div class="text-sm text-gray-500 mb-1">Preview</div>
+      <div id="previewBox" class="text-lg font-semibold">Loading...</div>
+    </div>
+    <div class="flex gap-3">
+      <button class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded">Save Changes</button>
+      <a href="/dashboard" class="px-5 py-2 rounded border">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    window.location.href = '/login';
+    return;
+  }
+  const calcId = "{{ calc_id }}";
+  const calcType = document.getElementById('calcType');
+  const calcInputs = document.getElementById('calcInputs');
+  const previewBox = document.getElementById('previewBox');
+  const inputHint = document.getElementById('inputHint');
+  const messageBox = document.getElementById('messageBox');
+
+  function showMessage(text, type='success') {
+    messageBox.className = `mb-4 p-3 rounded ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+    messageBox.textContent = text;
+    messageBox.classList.remove('hidden');
+  }
+
+  function updateHint(type) {
+    const hints = {
+      addition: 'Enter at least two numbers.',
+      subtraction: 'Enter at least two numbers.',
+      multiplication: 'Enter at least two numbers.',
+      division: 'Enter at least two numbers. Divisors cannot be zero.',
+      exponentiation: 'Enter exactly two numbers: base, exponent.',
+      modulus: 'Enter exactly two numbers: dividend, divisor.',
+      sqrt: 'Enter exactly one non-negative number.',
+    };
+    inputHint.textContent = hints[type] || '';
+  }
+
+  function updatePreview() {
+    const inputs = parseInputs(calcInputs.value);
+    const result = calculatePreview(calcType.value, inputs);
+    previewBox.textContent = result === null ? 'Enter valid values to preview the result.' : `${formatOperation(calcType.value, inputs)} = ${result}`;
+  }
+
+  calcInputs.addEventListener('input', updatePreview);
+
+  async function loadCalculation() {
+    const response = await fetch(`/calculations/${calcId}`, { headers: { Authorization: `Bearer ${token}` } });
+    const calc = await response.json();
+    calcType.value = calc.type;
+    calcInputs.value = calc.inputs.join(', ');
+    updateHint(calc.type);
+    updatePreview();
+  }
+
+  document.getElementById('editCalculationForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const inputs = parseInputs(calcInputs.value);
+    const response = await fetch(`/calculations/${calcId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ inputs })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      showMessage(data.detail || 'Failed to update calculation.', 'error');
+      return;
+    }
+    showMessage('Calculation updated successfully.');
+    setTimeout(() => { window.location.href = `/dashboard/view/${calcId}`; }, 800);
+  });
+
+  loadCalculation();
+});
+</script>
+{% endblock %}

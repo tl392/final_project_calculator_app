@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+{% block title %}View Calculation{% endblock %}
+
+{% block content %}
+<section class="bg-white rounded-lg shadow p-6 max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold">Calculation Details</h1>
+    <div class="space-x-3">
+      <a id="editLink" href="#" class="text-blue-700 hover:underline">Edit</a>
+      <a href="/dashboard" class="text-gray-700 hover:underline">Back</a>
+    </div>
+  </div>
+
+  <div id="messageBox" class="hidden mb-4 p-3 rounded"></div>
+  <div id="calcDetails" class="grid md:grid-cols-2 gap-6"></div>
+  <div class="mt-6 flex gap-3">
+    <button id="deleteBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Delete</button>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    window.location.href = '/login';
+    return;
+  }
+  const calcId = "{{ calc_id }}";
+  const messageBox = document.getElementById('messageBox');
+
+  function showMessage(text, type='success') {
+    messageBox.className = `mb-4 p-3 rounded ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+    messageBox.textContent = text;
+    messageBox.classList.remove('hidden');
+  }
+
+  async function loadCalculation() {
+    const response = await fetch(`/calculations/${calcId}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) {
+      showMessage('Failed to load calculation.', 'error');
+      return;
+    }
+    const calc = await response.json();
+    document.getElementById('editLink').href = `/dashboard/edit/${calc.id}`;
+    document.getElementById('calcDetails').innerHTML = `
+      <div class="bg-blue-50 border border-blue-100 rounded p-4">
+        <div class="text-sm text-gray-500 mb-1">Expression</div>
+        <div class="text-xl font-semibold">${formatOperation(calc.type, calc.inputs)}</div>
+        <div class="text-sm text-gray-500 mt-3 mb-1">Result</div>
+        <div class="text-3xl font-bold text-blue-700">${calc.result}</div>
+      </div>
+      <div class="bg-gray-50 border rounded p-4 space-y-3">
+        <div><span class="text-sm text-gray-500">Type:</span> <span class="capitalize font-medium">${calc.type}</span></div>
+        <div><span class="text-sm text-gray-500">Inputs:</span> <span class="font-medium">${calc.inputs.join(', ')}</span></div>
+        <div><span class="text-sm text-gray-500">Created:</span> <span class="font-medium">${new Date(calc.created_at).toLocaleString()}</span></div>
+        <div><span class="text-sm text-gray-500">Updated:</span> <span class="font-medium">${new Date(calc.updated_at).toLocaleString()}</span></div>
+        <div><span class="text-sm text-gray-500">ID:</span> <span class="font-mono text-sm">${calc.id}</span></div>
+      </div>
+    `;
+
+    document.getElementById('deleteBtn').addEventListener('click', async () => {
+      const delResponse = await fetch(`/calculations/${calc.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (delResponse.ok) {
+        showMessage('Calculation deleted successfully.');
+        setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+      } else {
+        showMessage('Failed to delete calculation.', 'error');
+      }
+    });
+  }
+
+  loadCalculation();
+});
+</script>
+{% endblock %}
