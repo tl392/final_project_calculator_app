@@ -322,9 +322,25 @@ The new operations reuse the same schema design.
 
 ## Output Screenshots
 
-* Home page
-* Register and Login page
-* Calculator UI
-* Reports UI
-* Test results
+### Home page
+![alt text](screenshots/Home.png)
+### Register and Login page
+![alt text](screenshots/Register1.png)
+![alt text](screenshots/Register2.png)
+![alt text](screenshots/Login.png)
+### Calculator UI
+![alt text](screenshots/dashboard.png)
+![alt text](screenshots/Dashboard2.png)
+![alt text](screenshots/Dashboard3.png)
+![alt text](screenshots/Dashboard4.png)
+![alt text](screenshots/Edit1.png)
+![alt text](screenshots/Edit2.png)
+![alt text](screenshots/Delete.png)
+![alt text](screenshots/View.png)
+### Reports UI
+![alt text](screenshots/Report1.png)
+![alt text](screenshots/Report2.png)
+![alt text](screenshots/Report3.png)
+### E2E Test results
+![alt text](screenshots/image.png)
 ---
