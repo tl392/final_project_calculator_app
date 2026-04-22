@@ -32,7 +32,7 @@
         <div id="previewBox" class="text-lg font-semibold">Enter values to preview the result.</div>
       </div>
       <div class="md:col-span-3">
-        <button class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded">Save Calculation</button>
+        <button id="save-cal-submit-btn" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded">Save Calculation</button>
       </div>
     </form>
   </section>
@@ -159,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
+      console.log(data.detail);
       showMessage(data.detail || 'Failed to save calculation.', 'error');
       return;
     }

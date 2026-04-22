@@ -99,8 +99,8 @@ jobs:
         with:
           push: true
           tags: |
-            ltaravindh392/module14-calculator-app:latest
-            ltaravindh392/module14-calculator-app:${{ github.sha }}
+            ltaravindh392/final_project_calculator_app:latest
+            ltaravindh392/final_project_calculator_app:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=registry,ref=ltaravindh392/module14-calculator-app:cache
+          cache-from: type=registry,ref=ltaravindh392/final_project_calculator_app:cache
           cache-to: type=inline,mode=max

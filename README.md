@@ -1,6 +1,6 @@
 # Module 14 — Calculator App
 
-A FastAPI-based calculator application with PostgreSQL persistence, JWT authentication, Docker containerization, and a full CI/CD pipeline. This module builds on previous work by adding secure user registration/login, front-end pages, Playwright E2E tests, and production-ready deployment.
+A FastAPI-based calculator application with PostgreSQL persistence, JWT authentication, Docker containerization, and a full CI/CD pipeline. This module builds on previous work by adding secure user registration/login, reports, front-end pages, Playwright E2E tests, and production-ready deployment.
 
 ---
 
@@ -38,7 +38,7 @@ A FastAPI-based calculator application with PostgreSQL persistence, JWT authenti
 ## Project Structure Changes
 
 ```
-module14-calculator-app/
+final_project_calculator_app/
 │
 ├── .github/
 │   └── workflows/
@@ -90,6 +90,7 @@ module14-calculator-app/
 │   ├── login.html                    # Login form
 │   ├── register.html                 # User registration form
 │   ├── dashboard.html                # User dashboard (list calculations)
+│   ├── report.html                   # User report
 │   ├── view_calculation.html         # View single calculation detail
 │   └── edit_calculation.html         # Edit existing calculation
 │
@@ -289,35 +290,7 @@ docker run -p 8000:8000 calculator-app
 ```
 
 ---
-
-## Output Screenshots
-
-*Add screenshots here:*
-
-* Home page
-![alt text](screenshots/image.png)
-![alt text](screenshots/image-1.png)
-* Register and Login page
-![alt text](screenshots/image-2.png)
-![alt text](screenshots/image-3.png)
-* Calculator UI
-![alt text](screenshots/image-4.png)
-![alt text](screenshots/image-5.png)
-![alt text](screenshots/image-6.png)
-![alt text](screenshots/image-7.png)
-![alt text](screenshots/image-8.png)
-![alt text](screenshots/image-9.png)
-![alt text](screenshots/image-10.png)
-![alt text](screenshots/image-11.png)
-* Test results
-![alt text](screenshots/image-12.png)
-![alt text](screenshots/image-13.png)
-![alt text](screenshots/image-14.png)
-![alt text](screenshots/image-15.png)
----
-
-## Module 14 Feature Update
-
+## Reports
 This version adds:
 - Exponentiation calculations
 - Modulus calculations
@@ -345,3 +318,13 @@ No database migration is required for these features because the existing `calcu
 - `result`
 
 The new operations reuse the same schema design.
+
+
+## Output Screenshots
+
+* Home page
+* Register and Login page
+* Calculator UI
+* Reports UI
+* Test results
+---
