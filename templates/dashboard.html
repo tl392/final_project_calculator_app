@@ -159,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      console.log(data.detail);
       showMessage(data.detail || 'Failed to save calculation.', 'error');
       return;
     }

@@ -254,13 +254,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.detail || 'Registration failed');
             }
 
-            // Show success message
             showSuccess('Registration successful! Redirecting to login...');
-
-            // Redirect to login page after 2 seconds
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 2000);
+            window.location.assign('/login');
 
         } catch (error) {
             showError(error.message || 'An error occurred during registration');

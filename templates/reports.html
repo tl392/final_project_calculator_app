@@ -38,10 +38,11 @@
     </form>
   </div>
 
-  <div class="grid md:grid-cols-4 gap-4">
+  <div class="grid md:grid-cols-5 gap-4">
     <div class="bg-white rounded-lg shadow p-5"><div class="text-sm text-gray-500">Total Calculations</div><div id="totalCalculations" class="text-3xl font-bold mt-2">0</div></div>
     <div class="bg-white rounded-lg shadow p-5"><div class="text-sm text-gray-500">Average of Operands</div><div id="averageOperands" class="text-3xl font-bold mt-2">0</div></div>
     <div class="bg-white rounded-lg shadow p-5"><div class="text-sm text-gray-500">Avg Operands / Calculation</div><div id="avgOperandsPerCalc" class="text-3xl font-bold mt-2">0</div></div>
+    <div class="bg-white rounded-lg shadow p-5"><div class="text-sm text-gray-500">Highest Operand Value</div><div id="highestOperandValue" class="text-3xl font-bold mt-2">0</div></div>
     <div class="bg-white rounded-lg shadow p-5"><div class="text-sm text-gray-500">User Based Report</div><div id="userSummary" class="text-base font-semibold mt-2">-</div></div>
   </div>
 
@@ -51,10 +52,21 @@
       <div id="countByType" class="space-y-2"></div>
     </section>
     <section class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-bold mb-4">Recent Matching Calculations</h2>
-      <div id="reportRows" class="space-y-3"></div>
+      <h2 class="text-xl font-bold mb-4">Highest Result by Type</h2>
+      <div id="highestByType" class="space-y-2"></div>
     </section>
   </div>
+
+  <section class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-bold mb-4">Count by Type Chart</h2>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <canvas id="countByTypeChart" height="110"></canvas>
+  </section>
+
+  <section class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-bold mb-4">Recent Matching Calculations</h2>
+    <div id="reportRows" class="space-y-3"></div>
+  </section>
 </section>
 {% endblock %}
 
@@ -72,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterType = document.getElementById('filterType');
   const startDate = document.getElementById('startDate');
   const endDate = document.getElementById('endDate');
+  let countChart = null;
 
   async function loadReport() {
     const params = new URLSearchParams();
@@ -88,11 +101,47 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('totalCalculations').textContent = data.total_calculations;
     document.getElementById('averageOperands').textContent = data.average_of_operands;
     document.getElementById('avgOperandsPerCalc').textContent = data.average_operands_per_calculation;
+    document.getElementById('highestOperandValue').textContent = data.highest_operand_value;
     document.getElementById('userSummary').innerHTML = `${data.user.full_name}<br><span class="text-sm text-gray-500">${data.user.username} · ${data.user.email}</span>`;
 
     document.getElementById('countByType').innerHTML = Object.entries(data.count_by_type)
       .map(([type, count]) => `<div class="flex justify-between border rounded px-3 py-2"><span class="capitalize">${type}</span><span class="font-semibold">${count}</span></div>`)
       .join('');
+
+    document.getElementById('highestByType').innerHTML = Object.entries(data.highest_result_by_type)
+      .map(([type, value]) => `<div class="flex justify-between border rounded px-3 py-2"><span class="capitalize">${type}</span><span class="font-semibold">${value}</span></div>`)
+      .join('');
+
+    const labels = Object.keys(data.count_by_type);
+    const values = Object.values(data.count_by_type);
+    const canvas = document.getElementById('countByTypeChart');
+    if (window.Chart && canvas) {
+      const ctx = canvas.getContext('2d');
+      if (countChart) countChart.destroy();
+      countChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Calculation Count',
+            data: values,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    } else if (canvas) {
+      canvas.replaceWith(Object.assign(document.createElement('div'), {
+        className: 'text-sm text-gray-500',
+        textContent: 'Chart unavailable in this environment.'
+      }));
+    }
 
     const rows = data.calculations.slice(0, 8);
     document.getElementById('reportRows').innerHTML = rows.length

@@ -239,14 +239,21 @@ def report_summary(
         "sqrt",
     ]
     count_by_type = {calc_type: 0 for calc_type in all_types}
+    highest_result_by_type = {}
     operand_values = []
     operand_counts = []
     preview_items = []
 
     for calc in calculations:
         count_by_type[calc.type] = count_by_type.get(calc.type, 0) + 1
-        operand_values.extend(calc.inputs or [])
-        operand_counts.append(len(calc.inputs or []))
+        values = calc.inputs or []
+        operand_values.extend(values)
+        operand_counts.append(len(values))
+
+        existing_max = highest_result_by_type.get(calc.type)
+        if calc.result is not None and (existing_max is None or calc.result > existing_max):
+            highest_result_by_type[calc.type] = float(calc.result)
+
         preview_items.append(
             {
                 "id": calc.id,
@@ -257,6 +264,10 @@ def report_summary(
             }
         )
 
+    for calc_type in all_types:
+        highest_result_by_type.setdefault(calc_type, 0.0)
+
+    highest_operand_value = round(max(operand_values), 4) if operand_values else 0.0
     average_of_operands = round(sum(operand_values) / len(operand_values), 4) if operand_values else 0.0
     average_operands_per_calculation = round(sum(operand_counts) / len(operand_counts), 4) if operand_counts else 0.0
 
@@ -274,6 +285,8 @@ def report_summary(
         },
         "total_calculations": len(calculations),
         "count_by_type": count_by_type,
+        "highest_result_by_type": highest_result_by_type,
+        "highest_operand_value": highest_operand_value,
         "average_of_operands": average_of_operands,
         "average_operands_per_calculation": average_operands_per_calculation,
         "calculations": preview_items,

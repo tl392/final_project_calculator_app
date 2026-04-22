@@ -25,6 +25,8 @@ class ReportSummaryResponse(BaseModel):
     user: ReportUserInfo
     total_calculations: int
     count_by_type: Dict[str, int]
+    highest_result_by_type: Dict[str, float]
+    highest_operand_value: float
     average_of_operands: float
     average_operands_per_calculation: float
     calculations: List[ReportCalculationPreview]
