@@ -1,4 +1,4 @@
-# Module 14 — Calculator App
+# Final Project — Calculator App
 
 A FastAPI-based calculator application with PostgreSQL persistence, JWT authentication, Docker containerization, and a full CI/CD pipeline. This module builds on previous work by adding secure user registration/login, reports, front-end pages, Playwright E2E tests, and production-ready deployment.
 
@@ -277,17 +277,23 @@ on:
 
 ## Docker Hub
 
-### Build Image
+The production image is automatically built and pushed to Docker Hub on every successful CI run.
+
+**Image:** `docker.io/ltaravindh392/final_project_calculator_app:latest`
+
+### Pull and Run from Docker Hub
 
 ```bash
-docker build -t calculator-app .
+docker pull ltaravindh392/final_project_calculator_app:latest
+
+docker run -d \
+  -p 8000:8000 \
+  -e DATABASE_URL=postgresql://postgres:password@<db-host>:5432/calculator \
+  -e SECRET_KEY=your-secret-key \
+  ltaravindh392/final_project_calculator_app:latest
 ```
 
-### Run Container
-
-```bash
-docker run -p 8000:8000 calculator-app
-```
+**Docker Hub Repository:** [https://hub.docker.com/r/ltaravindh392/final_project_calculator_app](https://hub.docker.com/r/ltaravindh392/final_project_calculator_app)
 
 ---
 ## Reports
