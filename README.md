@@ -259,19 +259,39 @@ def calculation_factory(type):
 
 ## CI/CD Pipeline
 
-* GitHub Actions automates:
+The GitHub Actions workflow (`.github/workflows/test.yml`) runs on every push and pull request to `main`:
 
-  * Dependency installation
-  * Running tests
-  * Build validation
-
-Example:
-
-```yaml
-on:
-  push:
-    branches: [main]
 ```
+Push to main
+    │
+    ▼
+Spin up PostgreSQL service container
+    │
+    ▼
+Install Python dependencies
+    │
+    ▼
+Run Pytest unit tests
+    │
+    ▼
+Install Node + Playwright browsers
+    │
+    ▼
+Start FastAPI server (background)
+    │
+    ▼
+Run Playwright E2E tests
+    │
+    ▼
+All pass? → Build Docker image → Push to Docker Hub
+```
+
+### Secrets Required (GitHub → Settings → Secrets)
+
+| Secret | Value |
+|---|---|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username |
+| `DOCKERHUB_TOKEN` | Your Docker Hub password or access token |
 
 ---
 
